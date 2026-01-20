@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameCode Vault Premium</title>
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-main: #ffffff;
+            --accent-blue: #3498db;
+            --accent-green: #90eadb;
+            --accent-yellow: #f9ff9e;
+            --dark-bg: #0f2027;
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            background-color: var(--dark-bg); 
+            color: var(--text-main);
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+
+        /* Capa de fondo con transición suave */
+        #bg-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -2;
+            background-size: cover;
+            background-position: center;
+            transition: background-image 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Oscurecedor */
+        #bg-dimmer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.7) 100%);
+        }
+
+        /* ENCABEZADO */
+        header { 
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 15px 25px; 
+            display: flex; 
+            align-items: center; 
+            gap: 20px; 
+            border-bottom: 1px solid var(--glass-border);
+            z-index: 10;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            min-height: 70px;
+        }
+        
+        #category-container { 
+            display: flex; 
+            overflow-x: auto; 
+            gap: 10px; 
+            flex: 1;
+            scrollbar-width: none;
+        }
+        #category-container::-webkit-scrollbar { display: none; }
+        
+        .category-btn { 
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.7);
+            border: 1px solid var(--glass-border);
+            padding: 10px 20px; 
+            cursor: pointer; 
+            white-space: nowrap; 
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .category-btn.active { 
+            background: var(--accent-blue);
+            color: white; 
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
+            transform: translateY(-2px);
+        }
+        .category-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.15);
+            color: white;
+        }
+
+        /* BUSCADOR Y BOTONES */
+        .search-section { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            background: rgba(0,0,0,0.3); 
+            padding: 5px 10px; 
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+        }
+        #main-search { 
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 8px; 
+            width: 200px; 
+            outline: none;
+            font-size: 0.9rem;
+        }
+        #main-search::placeholder { color: rgba(255,255,255,0.4); }
+
+        .action-group { display: flex; gap: 10px; }
+        .ui-btn { 
+            border: none; 
+            padding: 10px 15px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            border-radius: 8px; 
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .ui-btn:hover { transform: scale(1.1); filter: brightness(1.2); }
+
+        /* CONTENIDO PRINCIPAL - VIÑETAS COMPACTAS */
+        main { 
+            flex-grow: 1; 
+            padding: 20px; 
+            overflow-y: auto; 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+            gap: 15px;
+        }
+        
+        /* VIÑETA COMPACTA */
+        .vignette {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    cursor: pointer;
+    position: relative;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    height: 200px; /* Cambiado de 180px a 200px para acomodar la imagen más grande */
+    display: flex;
+    flex-direction: column;
+}
+        .vignette:hover { 
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        
+        .vignette-image {
+    height: 120px; /* Cambiado de 100px a 120px */
+    background: #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 8px 8px 0 0;
+}
+        .vignette-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .vignette-image.default {
+            background: linear-gradient(135deg, #555 0%, #777 100%);
+        }
+        .vignette-image.default::after {
+            content: "No image";
+            color: rgba(255,255,255,0.5);
+            font-size: 12px;
+        }
+        
+        .vignette-title {
+            padding: 10px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-green);
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+            flex-grow: 1;
+        }
+        
+        .vignette-tags {
+            padding: 0 12px 8px 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .tag {
+            background: rgba(52, 152, 219, 0.2);
+            color: var(--accent-blue);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+        }
+        
+        /* TOOLTIP CON CÓDIGO */
+        .code-tooltip {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 32, 39, 0.95);
+            backdrop-filter: blur(5px);
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 2;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            border: 2px solid var(--accent-blue);
+        }
+        .vignette:hover .code-tooltip {
+            display: block;
+        }
+        
+        .code-tooltip code {
+            color: #90ee90;
+            background: none;
+            padding: 0;
+            border: none;
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal {
+            background: var(--dark-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            backdrop-filter: blur(20px);
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 {
+            margin: 0;
+            color: var(--accent-green);
+        }
+        .close-modal {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .close-modal:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: rgba(255,255,255,0.8);
+            font-size: 14px;
+        }
+        
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: 'Consolas', monospace;
+        }
+        
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .required::after {
+            content: " *";
+            color: #ff6b6b;
+        }
+        
+        /* SUGERENCIAS DE TAGS */
+        .tags-container {
+            position: relative;
+        }
+        
+        .tags-input-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            padding: 8px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            min-height: 44px;
+        }
+        
+        .tag-input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: white;
+            min-width: 100px;
+            outline: none;
+            font-size: 14px;
+        }
+        
+        .tag-suggestion-box {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(30, 30, 40, 0.95);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            margin-top: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            z-index: 10;
+        }
+        
+        .tag-suggestion-box.active {
+            display: block;
+        }
+        
+        .tag-suggestion {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .tag-suggestion:hover {
+            background: var(--accent-blue);
+        }
+        
+        .input-tag {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(52, 152, 219, 0.2);
+            color: var(--accent-blue);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            gap: 5px;
+        }
+        
+        .remove-tag {
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+        }
+        
+        .remove-tag:hover {
+            color: #ff6b6b;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            padding: 20px;
+            border-top: 1px solid var(--glass-border);
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: var(--accent-blue);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* MENÚ CONTEXTUAL */
+        #context-menu {
+            display: none; position: fixed; background: rgba(20, 20, 20, 0.95); 
+            border: 1px solid var(--glass-border); border-radius: 8px;
+            box-shadow: 10px 10px 30px rgba(0,0,0,0.5); z-index: 1000; overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        #context-menu button {
+            display: block; width: 100%; padding: 12px 20px; border: none;
+            background: none; text-align: left; cursor: pointer; color: white; font-size: 14px;
+        }
+        #context-menu button:hover { background: var(--accent-blue); }
+        
+        .vignette-context-menu {
+            display: none; position: fixed; background: rgba(20, 20, 20, 0.95); 
+            border: 1px solid var(--glass-border); border-radius: 8px;
+            box-shadow: 10px 10px 30px rgba(0,0,0,0.5); z-index: 1001; overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        .vignette-context-menu button {
+            display: block; width: 100%; padding: 12px 20px; border: none;
+            background: none; text-align: left; cursor: pointer; color: white; font-size: 14px;
+        }
+        .vignette-context-menu button:hover { background: var(--accent-blue); }
+    </style>
+</head>
+<body>
+
+<div id="bg-overlay"></div>
+<div id="bg-dimmer"></div>
+
+<header>
+    <div id="category-container"></div>
+    
+    <div class="search-section">
+        <input type="text" id="main-search" placeholder="Buscar comando..." oninput="handleSearch()">
+    </div>
+
+    <div class="action-group">
+        <button class="ui-btn" style="background-color: var(--accent-blue); color: white;" onclick="addCategory()" title="Nuevo Juego">+</button>
+        <button class="ui-btn" style="background-color: var(--accent-green); color: #222;" onclick="openModal()" title="Nueva Viñeta">★</button>
+    </div>
+</header>
+
+<main id="main-content"></main>
+
+<!-- MODAL PARA AÑADIR/EDITAR VIÑETA -->
+<div id="modal-overlay" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modal-title">Nueva Viñeta</h2>
+            <button class="close-modal" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="snippet-title" class="required">Título</label>
+                <input type="text" id="snippet-title" placeholder="Nombre del comando o código">
+            </div>
+            
+            <div class="form-group">
+                <label for="snippet-image">Link de una imagen (opcional)</label>
+                <input type="text" id="snippet-image" placeholder="https://ejemplo.com/imagen.jpg">
+                <small style="color: rgba(255,255,255,0.5); font-size: 12px;">Si no se coloca, se usará un cuadro gris</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="snippet-code" class="required">Código</label>
+                <textarea id="snippet-code" placeholder="Pega aquí tu código..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="snippet-tags">Tags (opcional)</label>
+                <div class="tags-container">
+                    <div class="tags-input-container" onclick="document.getElementById('tag-input').focus()">
+                        <div id="tag-display"></div>
+                        <input type="text" id="tag-input" class="tag-input" placeholder="Escribe tags separados por coma" oninput="updateTagSuggestions()">
+                    </div>
+                    <div id="tag-suggestions" class="tag-suggestion-box"></div>
+                </div>
+                <small style="color: rgba(255,255,255,0.5); font-size: 12px;">Separa con comas o presiona Enter. Tags existentes: <span id="existing-tags-count">0</span></small>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+            <button class="btn btn-primary" onclick="saveSnippet()">Guardar Viñeta</button>
+        </div>
+    </div>
+</div>
+
+<!-- MENÚ CONTEXTUAL PARA CATEGORÍAS -->
+<div id="context-menu">
+    <button onclick="renameCategory()">✏️ Renombrar</button>
+    <button onclick="setBackground()">🖼️ Cambiar fondo</button>
+    <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 0;">
+    <button onclick="deleteCategory()" style="color:#ff6b6b;">🗑️ Eliminar</button>
+</div>
+
+<!-- MENÚ CONTEXTUAL PARA VIÑETAS -->
+<div id="vignette-context-menu" class="vignette-context-menu">
+    <button onclick="editVignette()">✏️ Editar</button>
+    <button onclick="copyVignetteCode()">📋 Copiar código</button>
+    <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 0;">
+    <button onclick="deleteVignette()" style="color:#ff6b6b;">🗑️ Eliminar</button>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCwtI9nF1Xs5i2PEhKjCdNPMTKnWoFPijI",
+        authDomain: "almacen-minecraf.firebaseapp.com",
+        databaseURL: "https://almacen-minecraf-default-rtdb.firebaseio.com",
+        projectId: "almacen-minecraf",
+        storageBucket: "almacen-minecraf.firebasestorage.app",
+        messagingSenderId: "191590928401",
+        appId: "1:191590928401:web:16e13d1be65d99ac60a1b0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const dbRef = ref(db, 'vaultData');
+
+    let state = JSON.parse(localStorage.getItem('vaultCache')) || {
+        categories: [{name: "Minecraft", bg: ""}],
+        snippets: [],
+        activeCat: "Minecraft",
+        lastUpdated: 0,
+        searchTerm: ""
+    };
+
+    let selectedCatContext = "";
+    let selectedVignetteId = null;
+    let currentTags = [];
+    let allTags = new Set();
+    let editingSnippetId = null;
+
+    onValue(dbRef, (snapshot) => {
+        const cloudData = snapshot.val();
+        if (cloudData && cloudData.lastUpdated > state.lastUpdated) {
+            state.categories = cloudData.categories || [{name: "Minecraft", bg: ""}];
+            state.snippets = cloudData.snippets || [];
+            state.lastUpdated = cloudData.lastUpdated;
+            updateAllTags();
+            saveLocal();
+            render();
+        }
+    });
+
+    function saveAll() {
+        state.lastUpdated = Date.now();
+        updateAllTags();
+        saveLocal();
+        set(dbRef, { 
+            categories: state.categories, 
+            snippets: state.snippets, 
+            lastUpdated: state.lastUpdated 
+        });
+        render();
+    }
+
+    function saveLocal() { 
+        localStorage.setItem('vaultCache', JSON.stringify(state)); 
+    }
+
+    function updateAllTags() {
+        allTags.clear();
+        state.snippets.forEach(snippet => {
+            if (snippet.tags && Array.isArray(snippet.tags)) {
+                snippet.tags.forEach(tag => {
+                    if (tag.trim()) {
+                        allTags.add(tag.trim().toLowerCase());
+                    }
+                });
+            }
+        });
+        document.getElementById('existing-tags-count').textContent = allTags.size;
+    }
+
+    window.render = function() {
+        const catContainer = document.getElementById('category-container');
+        const mainContent = document.getElementById('main-content');
+        const bgOverlay = document.getElementById('bg-overlay');
+
+        // Renderizar categorías
+        catContainer.innerHTML = '';
+        state.categories.forEach(cat => {
+            const btn = document.createElement('button');
+            btn.className = `category-btn ${state.activeCat === cat.name ? 'active' : ''}`;
+            btn.innerText = cat.name;
+            btn.onclick = () => { state.activeCat = cat.name; render(); };
+            btn.oncontextmenu = (e) => { 
+                e.preventDefault(); 
+                selectedCatContext = cat.name; 
+                showContextMenu(e.pageX, e.pageY); 
+            };
+            catContainer.appendChild(btn);
+        });
+
+        // Establecer fondo de categoría
+        const currentCat = state.categories.find(c => c.name === state.activeCat);
+        if(currentCat && currentCat.bg) {
+            bgOverlay.style.backgroundImage = `url('${currentCat.bg}')`;
+        } else {
+            bgOverlay.style.backgroundImage = 'none';
+        }
+
+        // Renderizar viñetas
+        mainContent.innerHTML = '';
+        const filtered = state.snippets.filter(s => 
+            s.cat === state.activeCat && 
+            (s.title.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
+             (s.tags && s.tags.some(tag => tag.toLowerCase().includes(state.searchTerm.toLowerCase()))) ||
+             s.code.toLowerCase().includes(state.searchTerm.toLowerCase()))
+        );
+
+        filtered.forEach((snippet, index) => {
+            const vignette = document.createElement('div');
+            vignette.className = 'vignette';
+            vignette.dataset.id = index;
+            
+            // Imagen
+            const imageDiv = document.createElement('div');
+            imageDiv.className = snippet.image ? 'vignette-image' : 'vignette-image default';
+            if (snippet.image) {
+                const img = document.createElement('img');
+                img.src = snippet.image;
+                img.alt = snippet.title;
+                img.onerror = function() {
+                    this.parentElement.className = 'vignette-image default';
+                    this.remove();
+                };
+                imageDiv.appendChild(img);
+            }
+            
+            // Título
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'vignette-title';
+            titleDiv.textContent = snippet.title;
+            
+            // Tags
+            const tagsDiv = document.createElement('div');
+            tagsDiv.className = 'vignette-tags';
+            if (snippet.tags && snippet.tags.length > 0) {
+                snippet.tags.slice(0, 3).forEach(tag => {
+                    const tagSpan = document.createElement('span');
+                    tagSpan.className = 'tag';
+                    tagSpan.textContent = tag;
+                    tagsDiv.appendChild(tagSpan);
+                });
+                if (snippet.tags.length > 3) {
+                    const moreTag = document.createElement('span');
+                    moreTag.className = 'tag';
+                    moreTag.textContent = `+${snippet.tags.length - 3}`;
+                    tagsDiv.appendChild(moreTag);
+                }
+            }
+            
+            // Tooltip con código
+            const tooltip = document.createElement('div');
+            tooltip.className = 'code-tooltip';
+            const code = document.createElement('code');
+            code.textContent = snippet.code;
+            tooltip.appendChild(code);
+            
+            vignette.appendChild(imageDiv);
+            vignette.appendChild(titleDiv);
+            vignette.appendChild(tagsDiv);
+            vignette.appendChild(tooltip);
+            
+            // Eventos
+            vignette.onclick = () => {
+                navigator.clipboard.writeText(snippet.code);
+                vignette.style.background = 'rgba(52, 152, 219, 0.3)';
+                setTimeout(() => vignette.style.background = '', 500);
+            };
+            
+            vignette.oncontextmenu = (e) => {
+                e.preventDefault();
+                selectedVignetteId = index;
+                showVignetteContextMenu(e.pageX, e.pageY);
+            };
+            
+            mainContent.appendChild(vignette);
+        });
+    };
+
+    // MODAL FUNCTIONS
+    window.openModal = function(snippetId = null) {
+        editingSnippetId = snippetId;
+        const modal = document.getElementById('modal-overlay');
+        const titleInput = document.getElementById('modal-title');
+        
+        if (snippetId !== null) {
+            titleInput.textContent = 'Editar Viñeta';
+            const snippet = state.snippets[snippetId];
+            document.getElementById('snippet-title').value = snippet.title;
+            document.getElementById('snippet-image').value = snippet.image || '';
+            document.getElementById('snippet-code').value = snippet.code;
+            
+            currentTags = snippet.tags ? [...snippet.tags] : [];
+            renderTags();
+        } else {
+            titleInput.textContent = 'Nueva Viñeta';
+            document.getElementById('snippet-title').value = '';
+            document.getElementById('snippet-image').value = '';
+            document.getElementById('snippet-code').value = '';
+            currentTags = [];
+            renderTags();
+        }
+        
+        modal.classList.add('active');
+        document.getElementById('snippet-title').focus();
+    };
+
+    window.closeModal = function() {
+        document.getElementById('modal-overlay').classList.remove('active');
+        editingSnippetId = null;
+    };
+
+    function renderTags() {
+        const tagDisplay = document.getElementById('tag-display');
+        tagDisplay.innerHTML = '';
+        
+        currentTags.forEach((tag, index) => {
+            const tagElement = document.createElement('span');
+            tagElement.className = 'input-tag';
+            tagElement.innerHTML = `
+                ${tag}
+                <span class="remove-tag" onclick="removeTag(${index})">×</span>
+            `;
+            tagDisplay.appendChild(tagElement);
+        });
+    }
+
+    window.updateTagSuggestions = function() {
+        const input = document.getElementById('tag-input');
+        const suggestionsBox = document.getElementById('tag-suggestions');
+        const searchTerm = input.value.trim().toLowerCase();
+        
+        if (!searchTerm) {
+            suggestionsBox.classList.remove('active');
+            return;
+        }
+        
+        // Filtrar tags existentes
+        const filteredTags = Array.from(allTags).filter(tag => 
+            tag.includes(searchTerm) && !currentTags.includes(tag)
+        );
+        
+        // Mostrar sugerencias
+        suggestionsBox.innerHTML = '';
+        if (filteredTags.length > 0) {
+            filteredTags.forEach(tag => {
+                const suggestion = document.createElement('div');
+                suggestion.className = 'tag-suggestion';
+                suggestion.textContent = tag;
+                suggestion.onclick = () => {
+                    if (!currentTags.includes(tag)) {
+                        currentTags.push(tag);
+                        renderTags();
+                        input.value = '';
+                        suggestionsBox.classList.remove('active');
+                    }
+                };
+                suggestionsBox.appendChild(suggestion);
+            });
+            suggestionsBox.classList.add('active');
+        } else {
+            suggestionsBox.classList.remove('active');
+        }
+    };
+
+    window.removeTag = function(index) {
+        currentTags.splice(index, 1);
+        renderTags();
+    };
+
+    // Manejar entrada de tags
+    document.getElementById('tag-input').addEventListener('keydown', function(e) {
+        if (e.key === ',' || e.key === 'Enter') {
+            e.preventDefault();
+            const tag = this.value.trim();
+            if (tag && !currentTags.includes(tag)) {
+                currentTags.push(tag);
+                renderTags();
+                this.value = '';
+            }
+        }
+    });
+
+    document.getElementById('tag-input').addEventListener('blur', function() {
+        const tag = this.value.trim();
+        if (tag && !currentTags.includes(tag)) {
+            currentTags.push(tag);
+            renderTags();
+            this.value = '';
+        }
+    });
+
+    window.saveSnippet = function() {
+        const title = document.getElementById('snippet-title').value.trim();
+        const image = document.getElementById('snippet-image').value.trim();
+        const code = document.getElementById('snippet-code').value.trim();
+        
+        if (!title || !code) {
+            alert('Título y código son obligatorios');
+            return;
+        }
+        
+        const snippet = {
+            cat: state.activeCat,
+            title: title,
+            image: image || null,
+            code: code,
+            tags: currentTags.filter(tag => tag.trim())
+        };
+        
+        if (editingSnippetId !== null) {
+            state.snippets[editingSnippetId] = snippet;
+        } else {
+            state.snippets.push(snippet);
+        }
+        
+        saveAll();
+        closeModal();
+    };
+
+    // CONTEXT MENU FUNCTIONS
+    function showContextMenu(x, y) {
+        const menu = document.getElementById('context-menu');
+        menu.style.display = 'block';
+        menu.style.left = Math.min(x, window.innerWidth - 200) + 'px';
+        menu.style.top = Math.min(y, window.innerHeight - 150) + 'px';
+    }
+
+    function showVignetteContextMenu(x, y) {
+        const menu = document.getElementById('vignette-context-menu');
+        menu.style.display = 'block';
+        menu.style.left = Math.min(x, window.innerWidth - 200) + 'px';
+        menu.style.top = Math.min(y, window.innerHeight - 150) + 'px';
+    }
+
+    window.onclick = () => { 
+        document.getElementById('context-menu').style.display = 'none';
+        document.getElementById('vignette-context-menu').style.display = 'none';
+    };
+
+    window.editVignette = function() {
+        if (selectedVignetteId !== null) {
+            openModal(selectedVignetteId);
+            document.getElementById('vignette-context-menu').style.display = 'none';
+        }
+    };
+
+    window.copyVignetteCode = function() {
+        if (selectedVignetteId !== null) {
+            const snippet = state.snippets[selectedVignetteId];
+            navigator.clipboard.writeText(snippet.code);
+            document.getElementById('vignette-context-menu').style.display = 'none';
+        }
+    };
+
+    window.deleteVignette = function() {
+        if (selectedVignetteId !== null && confirm('¿Eliminar esta viñeta?')) {
+            state.snippets.splice(selectedVignetteId, 1);
+            saveAll();
+            document.getElementById('vignette-context-menu').style.display = 'none';
+        }
+    };
+
+    // CATEGORY FUNCTIONS
+    window.handleSearch = () => { 
+        state.searchTerm = document.getElementById('main-search').value; 
+        render(); 
+    };
+    
+    window.renameCategory = () => {
+        const n = prompt("Nuevo nombre:");
+        if(n) {
+            state.snippets.forEach(s => { if(s.cat === selectedCatContext) s.cat = n; });
+            state.categories.find(c => c.name === selectedCatContext).name = n;
+            state.activeCat = n;
+            saveAll();
+        }
+    };
+
+    window.setBackground = () => {
+        const url = prompt("URL de la imagen:");
+        if(url !== null) { 
+            state.categories.find(c => c.name === selectedCatContext).bg = url; 
+            saveAll(); 
+        }
+    };
+
+    window.deleteCategory = () => {
+        if(confirm("¿Eliminar juego y todas sus viñetas?")) {
+            state.categories = state.categories.filter(c => c.name !== selectedCatContext);
+            state.snippets = state.snippets.filter(s => s.cat !== selectedCatContext);
+            state.activeCat = state.categories[0]?.name || "";
+            saveAll();
+        }
+    };
+
+    window.addCategory = () => {
+        const n = prompt("Nombre del juego:");
+        if(n) { 
+            state.categories.push({name: n, bg: ""}); 
+            state.activeCat = n; 
+            saveAll(); 
+        }
+    };
+
+    // Inicializar
+    updateAllTags();
+    render();
+</script>
+</body>
+</html>
