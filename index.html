@@ -12,7 +12,14 @@
             --accent-blue: #3498db;
             --accent-green: #90eadb;
             --accent-yellow: #f9ff9e;
+            --accent-orange: #ffa500;
             --dark-bg: #0f2027;
+            --board-bg: #1a2b3c;
+            --code-bg: #0c141c;
+            --reorder-highlight: rgba(46, 204, 113, 0.3);
+            --reorder-selected: rgba(46, 204, 113, 0.7);
+            --vignette-size: 180px;
+            --vignette-gap: 15px;
         }
         
         body { 
@@ -26,7 +33,12 @@
             overflow: hidden; 
         }
 
-        /* Capa de fondo con transición suave */
+        .app-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
         #bg-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             z-index: -2;
@@ -35,7 +47,6 @@
             transition: background-image 1.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Oscurecedor */
         #bg-dimmer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             z-index: -1;
@@ -109,7 +120,11 @@
         }
         #main-search::placeholder { color: rgba(255,255,255,0.4); }
 
-        .action-group { display: flex; gap: 10px; }
+        .action-group { 
+            display: flex; 
+            gap: 10px; 
+            align-items: center;
+        }
         .ui-btn { 
             border: none; 
             padding: 10px 15px; 
@@ -120,48 +135,185 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            white-space: nowrap;
         }
-        .ui-btn:hover { transform: scale(1.1); filter: brightness(1.2); }
+        .ui-btn:hover { transform: scale(1.05); filter: brightness(1.2); }
 
-        /* CONTENIDO PRINCIPAL - VIÑETAS COMPACTAS */
-        main { 
-            flex-grow: 1; 
+        /* CONTROLES DE TAMAÑO DE VIÑETAS */
+        .size-controls {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(0,0,0,0.2);
+            padding: 5px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+        }
+        
+        .size-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        
+        .size-btn:hover {
+            background: var(--accent-blue);
+        }
+        
+        .size-btn.active {
+            background: var(--accent-blue);
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+        }
+        
+        .size-indicator {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            margin: 0 5px;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        /* CONTENIDO PRINCIPAL - VIÑETAS */
+        #vignette-container { 
+            flex: 1;
             padding: 20px; 
             overflow-y: auto; 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(var(--vignette-size), 1fr)); 
+            gap: var(--vignette-gap);
+            transition: all 0.3s ease;
         }
         
         /* VIÑETA COMPACTA */
         .vignette {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid var(--glass-border);
-    border-radius: 10px;
-    cursor: pointer;
-    position: relative;
-    backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
-    overflow: hidden;
-    height: 200px; /* Cambiado de 180px a 200px para acomodar la imagen más grande */
-    display: flex;
-    flex-direction: column;
-}
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            cursor: pointer;
+            position: relative;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            height: calc(var(--vignette-size) * 1.1);
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+        }
         .vignette:hover { 
             background: rgba(255, 255, 255, 0.15);
             transform: translateY(-5px);
             box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .vignette.reorder-selected {
+            border: 2px solid #2ecc71;
+            background: var(--reorder-selected);
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.5);
+            transform: scale(1.02);
+        }
+        
+        .vignette.reorder-target {
+            border: 2px dashed #2ecc71;
+            background: var(--reorder-highlight);
+        }
+        
+        .vignette-order {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            color: var(--accent-yellow);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 1;
+        }
+        
+        .vignette-id {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #90ee90;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-family: monospace;
+            z-index: 1;
+        }
+        
+        .reorder-indicator {
+            position: absolute;
+            top: 30px;
+            right: 5px;
+            background: #2ecc71;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 1;
+            animation: pulse 2s infinite;
+        }
+        
+        .reorder-arrow {
+            position: absolute;
+            top: 50%;
+            left: -25px;
+            transform: translateY(-50%);
+            background: #2ecc71;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 2;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { left: -40px; opacity: 0; }
+            to { left: -25px; opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
         
         .vignette-image {
-    height: 120px; /* Cambiado de 100px a 120px */
-    background: #555;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    border-radius: 8px 8px 0 0;
-}
+            height: calc(var(--vignette-size) * 0.6);
+            background: #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 8px 8px 0 0;
+        }
         .vignette-image img {
             width: 100%;
             height: 100%;
@@ -177,10 +329,20 @@
         }
         
         .vignette-title {
-            padding: 10px 12px;
+            padding: 8px 12px 4px 12px;
             font-size: 14px;
             font-weight: 600;
             color: var(--accent-green);
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        
+        .vignette-description {
+            padding: 0 12px;
+            font-size: 11px;
+            color: var(--accent-orange);
+            opacity: 0.9;
             text-overflow: ellipsis;
             overflow: hidden;
             white-space: nowrap;
@@ -201,36 +363,161 @@
             font-size: 10px;
             border: 1px solid rgba(52, 152, 219, 0.3);
         }
+
+        /* PIZARRA */
+        #board {
+            width: 45%;
+            background: var(--board-bg);
+            border-left: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
         
-        /* TOOLTIP CON CÓDIGO */
-        .code-tooltip {
-            display: none;
+        .board-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .board-header h2 {
+            margin: 0 0 10px 0;
+            color: var(--accent-green);
+            font-size: 1.5rem;
+        }
+        
+        .board-description {
+            margin: 0 0 15px 0;
+            color: var(--accent-orange);
+            font-size: 14px;
+            font-style: italic;
+        }
+        
+        .board-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .board-tag {
+            background: rgba(52, 152, 219, 0.3);
+            color: var(--accent-blue);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            border: 1px solid rgba(52, 152, 219, 0.4);
+        }
+        
+        .board-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .board-btn {
+            padding: 8px 16px;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .board-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .board-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .board-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .board-content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .code-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--code-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .code-header {
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .code-header span {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .code-editor {
+            width: 100%;
+            height: 100%;
+            padding: 15px;
+            background: transparent;
+            color: #90ee90;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            border: none;
+            outline: none;
+            resize: none;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            overflow-x: hidden;
+            overflow-y: auto;
+            tab-size: 4;
+            box-sizing: border-box;
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(15, 32, 39, 0.95);
-            backdrop-filter: blur(5px);
-            padding: 15px;
-            border-radius: 10px;
-            z-index: 2;
-            overflow-y: auto;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 13px;
-            white-space: pre-wrap;
-            word-break: break-all;
-            border: 2px solid var(--accent-blue);
         }
-        .vignette:hover .code-tooltip {
-            display: block;
+
+        .code-editor-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: var(--code-bg);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        .code-tooltip code {
-            color: #90ee90;
-            background: none;
-            padding: 0;
-            border: none;
+        .code-editor::selection {
+            background: rgba(52, 152, 219, 0.5);
+        }
+        
+        .empty-board {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 1.2rem;
+            text-align: center;
+            padding: 40px;
         }
 
         /* MODAL */
@@ -471,6 +758,101 @@
             background: none; text-align: left; cursor: pointer; color: white; font-size: 14px;
         }
         .vignette-context-menu button:hover { background: var(--accent-blue); }
+
+        /* INSTRUCCIONES DE REORDENAMIENTO */
+        .reorder-instructions {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(20, 20, 30, 0.9);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            z-index: 999;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+        
+        .reorder-instructions.active {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from { bottom: -100px; opacity: 0; }
+            to { bottom: 20px; opacity: 1; }
+        }
+        
+        .reorder-instructions h3 {
+            margin: 0 0 10px 0;
+            color: var(--accent-green);
+        }
+        
+        .reorder-instructions p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .reorder-instructions .steps {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .reorder-instructions .step {
+            background: rgba(255,255,255,0.1);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            #board {
+                width: 50%;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+            }
+            
+            #board {
+                width: 100%;
+                height: 50vh;
+                border-left: none;
+                border-top: 1px solid var(--glass-border);
+            }
+            
+            #vignette-container {
+                height: 50vh;
+                overflow-y: auto;
+            }
+            
+            .reorder-instructions {
+                width: 90%;
+                left: 5%;
+                transform: none;
+            }
+            
+            .action-group {
+                flex-wrap: wrap;
+                justify-content: flex-end;
+            }
+            
+            .size-controls {
+                order: -1;
+                width: 100%;
+                justify-content: center;
+                margin-top: 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -485,25 +867,83 @@
         <input type="text" id="main-search" placeholder="Buscar comando..." oninput="handleSearch()">
     </div>
 
+    <div class="size-controls">
+        <button class="size-btn" onclick="changeVignetteSize('small')" title="Viñetas pequeñas">S</button>
+        <button class="size-btn active" onclick="changeVignetteSize('medium')" title="Viñetas medianas">M</button>
+        <button class="size-btn" onclick="changeVignetteSize('large')" title="Viñetas grandes">L</button>
+        <span class="size-indicator" id="size-indicator">Mediano</span>
+    </div>
+
     <div class="action-group">
-        <button class="ui-btn" style="background-color: var(--accent-blue); color: white;" onclick="addCategory()" title="Nuevo Juego">+</button>
-        <button class="ui-btn" style="background-color: var(--accent-green); color: #222;" onclick="openModal()" title="Nueva Viñeta">★</button>
+        <button class="ui-btn" style="background-color: var(--accent-blue); color: white;" onclick="addCategory()" title="Nueva Carpeta">+ Carpeta</button>
+        <button class="ui-btn" style="background-color: var(--accent-green); color: #222;" onclick="openModal()" title="Nueva Nota">+ Nota</button>
+        <button class="ui-btn" style="background-color: var(--accent-yellow); color: #222;" onclick="toggleReorderMode()" title="Reordenar notas">↕️</button>
+        <button class="ui-btn" style="background-color: #9b59b6; color: white;" onclick="saveToFirebase()" title="Guardar en Firebase">💾 Guardar</button>
+        <button class="ui-btn" style="background-color: #e74c3c; color: white;" onclick="loadFromFirebase()" title="Cargar desde Firebase">📥 Cargar</button>
     </div>
 </header>
 
-<main id="main-content"></main>
+<div class="app-container">
+    <main id="vignette-container"></main>
+    
+    <!-- PIZARRA -->
+    <aside id="board">
+        <div class="board-header">
+            <h2 id="board-title">Pizarra de Código</h2>
+            <div id="board-description" class="board-description"></div>
+            <div class="board-tags" id="board-tags"></div>
+            <div class="board-actions">
+                <button class="board-btn" onclick="copyBoardCode()">📋 Copiar código</button>
+                <button class="board-btn secondary" onclick="clearBoard()">🗑️ Limpiar pizarra</button>
+            </div>
+        </div>
+        
+        <div class="board-content">
+            <div id="board-empty" class="empty-board">
+                <div>
+                    <div style="font-size: 3rem; margin-bottom: 20px;">📝</div>
+                    <p>Selecciona una nota para cargar su código en la pizarra</p>
+                    <p style="font-size: 0.9rem; margin-top: 10px; color: rgba(255,255,255,0.4);">
+                        El código en la pizarra es editable y temporal
+                    </p>
+                </div>
+            </div>
+            
+            <div id="board-content" style="display: none; flex: 1; flex-direction: column;">
+                <div class="code-container">
+                    <div class="code-header">
+                        <span>Código editable</span>
+                        <button class="board-btn" style="padding: 5px 10px; font-size: 12px;" onclick="copyBoardCode()">📋 Copiar</button>
+                    </div>
+                    <div class="code-editor-container">
+                        <textarea id="board-code" class="code-editor" placeholder="El código aparecerá aquí..." spellcheck="false"></textarea>
+                    </div>
+                </div>
+                
+                <div style="padding: 15px; color: rgba(255,255,255,0.6); font-size: 12px; background: rgba(0,0,0,0.2); border-radius: 6px; margin-top: 15px;">
+                    💡 <strong>Nota:</strong> Los cambios en la pizarra son temporales. Haz clic en la misma nota nuevamente para restaurar el código original.
+                </div>
+            </div>
+        </div>
+    </aside>
+</div>
 
-<!-- MODAL PARA AÑADIR/EDITAR VIÑETA -->
+<!-- MODAL PARA AÑADIR/EDITAR NOTA -->
 <div id="modal-overlay" class="modal-overlay">
     <div class="modal">
         <div class="modal-header">
-            <h2 id="modal-title">Nueva Viñeta</h2>
+            <h2 id="modal-title">Nueva Nota</h2>
             <button class="close-modal" onclick="closeModal()">×</button>
         </div>
         <div class="modal-body">
             <div class="form-group">
                 <label for="snippet-title" class="required">Título</label>
                 <input type="text" id="snippet-title" placeholder="Nombre del comando o código">
+            </div>
+            
+            <div class="form-group">
+                <label for="snippet-description">Descripción (opcional)</label>
+                <textarea id="snippet-description" placeholder="Describe brevemente este código..."></textarea>
             </div>
             
             <div class="form-group">
@@ -531,12 +971,12 @@
         </div>
         <div class="modal-actions">
             <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-            <button class="btn btn-primary" onclick="saveSnippet()">Guardar Viñeta</button>
+            <button class="btn btn-primary" onclick="saveSnippet()">Guardar Nota</button>
         </div>
     </div>
 </div>
 
-<!-- MENÚ CONTEXTUAL PARA CATEGORÍAS -->
+<!-- MENÚ CONTEXTUAL PARA CARPETAS -->
 <div id="context-menu">
     <button onclick="renameCategory()">✏️ Renombrar</button>
     <button onclick="setBackground()">🖼️ Cambiar fondo</button>
@@ -544,7 +984,7 @@
     <button onclick="deleteCategory()" style="color:#ff6b6b;">🗑️ Eliminar</button>
 </div>
 
-<!-- MENÚ CONTEXTUAL PARA VIÑETAS -->
+<!-- MENÚ CONTEXTUAL PARA NOTAS -->
 <div id="vignette-context-menu" class="vignette-context-menu">
     <button onclick="editVignette()">✏️ Editar</button>
     <button onclick="copyVignetteCode()">📋 Copiar código</button>
@@ -552,9 +992,22 @@
     <button onclick="deleteVignette()" style="color:#ff6b6b;">🗑️ Eliminar</button>
 </div>
 
+<!-- INSTRUCCIONES DE REORDENAMIENTO -->
+<div id="reorder-instructions" class="reorder-instructions">
+    <h3>📋 Modo Reordenamiento</h3>
+    <p>1. <strong>Haz clic</strong> en una nota para seleccionarla (se pondrá verde)</p>
+    <p>2. <strong>Mueve el mouse</strong> sobre otra nota para definir la posición</p>
+    <p>3. <strong>Haz clic</strong> en la segunda nota para posicionar la seleccionada</p>
+    <div class="steps">
+        <span class="step">Primer clic: Seleccionar</span>
+        <span class="step">Mouseover: Previsualizar</span>
+        <span class="step">Segundo clic: Posicionar</span>
+    </div>
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCwtI9nF1Xs5i2PEhKjCdNPMTKnWoFPijI",
@@ -568,210 +1021,622 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const dbRef = ref(db, 'vaultData');
 
-    let state = JSON.parse(localStorage.getItem('vaultCache')) || {
-        categories: [{name: "Minecraft", bg: ""}],
-        snippets: [],
-        activeCat: "Minecraft",
-        lastUpdated: 0,
-        searchTerm: ""
+    // Generador de ID de 5 dígitos alfanumérico
+    function generate5DigitId() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let result = '';
+        for (let i = 0; i < 5; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    }
+
+    // ESTRUCTURA DE DATOS INICIAL VACÍA
+    let state = {
+        folders: [],
+        notes: {},
+        settings: {
+            activeFolderId: null,
+            searchTerm: "",
+            lastUpdated: null,
+            vignetteSize: "medium" // small, medium, large
+        }
     };
 
-    let selectedCatContext = "";
+    // Cargar datos locales de forma segura
+    function loadLocalData() {
+        try {
+            const localData = localStorage.getItem('vaultCache');
+            if (localData) {
+                const parsed = JSON.parse(localData);
+                if (parsed) {
+                    state = {
+                        folders: Array.isArray(parsed.folders) ? parsed.folders : [],
+                        notes: parsed.notes && typeof parsed.notes === 'object' ? parsed.notes : {},
+                        settings: {
+                            activeFolderId: parsed.settings?.activeFolderId || null,
+                            searchTerm: parsed.settings?.searchTerm || "",
+                            lastUpdated: parsed.settings?.lastUpdated || null,
+                            vignetteSize: parsed.settings?.vignetteSize || "medium"
+                        }
+                    };
+                    // Asegurar que todas las carpetas tengan noteOrder
+                    if (state.folders) {
+                        state.folders.forEach(folder => {
+                            if (folder && !folder.noteOrder) {
+                                folder.noteOrder = [];
+                            }
+                        });
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Error al cargar datos locales:", e);
+        }
+    }
+
+    // Cargar datos iniciales
+    loadLocalData();
+
+    // Variables globales
+    let selectedCatContext = null;
     let selectedVignetteId = null;
     let currentTags = [];
     let allTags = new Set();
     let editingSnippetId = null;
+    let currentBoardSnippet = null;
+    let originalBoardCode = "";
+    let isReorderMode = false;
+    let reorderSelectedId = null;
+    let reorderTargetId = null;
 
-    onValue(dbRef, (snapshot) => {
-        const cloudData = snapshot.val();
-        if (cloudData && cloudData.lastUpdated > state.lastUpdated) {
-            state.categories = cloudData.categories || [{name: "Minecraft", bg: ""}];
-            state.snippets = cloudData.snippets || [];
-            state.lastUpdated = cloudData.lastUpdated;
-            updateAllTags();
-            saveLocal();
-            render();
-        }
-    });
-
-    function saveAll() {
-        state.lastUpdated = Date.now();
-        updateAllTags();
-        saveLocal();
-        set(dbRef, { 
-            categories: state.categories, 
-            snippets: state.snippets, 
-            lastUpdated: state.lastUpdated 
+    // ========== CONTROL DE TAMAÑO DE VIÑETAS ==========
+    
+    window.changeVignetteSize = function(size) {
+        if (!['small', 'medium', 'large'].includes(size)) return;
+        
+        state.settings.vignetteSize = size;
+        
+        // Actualizar botones activos
+        document.querySelectorAll('.size-btn').forEach(btn => {
+            btn.classList.remove('active');
         });
+        
+        if (size === 'small') {
+            document.querySelector('.size-btn[title*="pequeñas"]').classList.add('active');
+            document.getElementById('size-indicator').textContent = 'Pequeño';
+        } else if (size === 'medium') {
+            document.querySelector('.size-btn[title*="medianas"]').classList.add('active');
+            document.getElementById('size-indicator').textContent = 'Mediano';
+        } else if (size === 'large') {
+            document.querySelector('.size-btn[title*="grandes"]').classList.add('active');
+            document.getElementById('size-indicator').textContent = 'Grande';
+        }
+        
+        // Aplicar tamaño
+        applyVignetteSize();
+        saveLocal();
+    };
+    
+    function applyVignetteSize() {
+        const root = document.documentElement;
+        let size, gap;
+        
+        switch(state.settings.vignetteSize) {
+            case 'small':
+                size = 140;
+                gap = 10;
+                break;
+            case 'medium':
+                size = 180;
+                gap = 15;
+                break;
+            case 'large':
+                size = 220;
+                gap = 20;
+                break;
+            default:
+                size = 180;
+                gap = 15;
+        }
+        
+        root.style.setProperty('--vignette-size', `${size}px`);
+        root.style.setProperty('--vignette-gap', `${gap}px`);
+    }
+
+    // ========== REORDENAMIENTO SIMPLIFICADO ==========
+    
+    window.toggleReorderMode = function() {
+        isReorderMode = !isReorderMode;
+        reorderSelectedId = null;
+        reorderTargetId = null;
+        
+        const reorderBtn = document.querySelector('.ui-btn[title*="Reordenar"], .ui-btn[title*="Cancelar"]');
+        if (reorderBtn) {
+            if (isReorderMode) {
+                reorderBtn.style.background = '#e74c3c';
+                reorderBtn.style.color = 'white';
+                reorderBtn.title = 'Cancelar reordenamiento';
+                reorderBtn.textContent = '✖ Cancelar';
+            } else {
+                reorderBtn.style.background = 'var(--accent-yellow)';
+                reorderBtn.style.color = '#222';
+                reorderBtn.title = 'Reordenar notas';
+                reorderBtn.textContent = '↕️';
+            }
+        }
+        
+        render();
+    };
+
+    function exitReorderMode() {
+        isReorderMode = false;
+        reorderSelectedId = null;
+        reorderTargetId = null;
+        
+        const reorderBtn = document.querySelector('.ui-btn[title*="Cancelar"], .ui-btn[title*="Reordenar"]');
+        if (reorderBtn) {
+            reorderBtn.style.background = 'var(--accent-yellow)';
+            reorderBtn.style.color = '#222';
+            reorderBtn.title = 'Reordenar notas';
+            reorderBtn.textContent = '↕️';
+        }
+        
         render();
     }
 
-    function saveLocal() { 
-        localStorage.setItem('vaultCache', JSON.stringify(state)); 
+    function handleReorderClick(noteId) {
+        if (!isReorderMode) return;
+        
+        if (reorderSelectedId === null) {
+            reorderSelectedId = noteId;
+            reorderTargetId = null;
+            render();
+        } else if (reorderSelectedId === noteId) {
+            reorderSelectedId = null;
+            reorderTargetId = null;
+            render();
+        } else {
+            moveNoteToNewPosition(reorderSelectedId, noteId);
+        }
     }
 
-    function updateAllTags() {
-        allTags.clear();
-        state.snippets.forEach(snippet => {
-            if (snippet.tags && Array.isArray(snippet.tags)) {
-                snippet.tags.forEach(tag => {
-                    if (tag.trim()) {
-                        allTags.add(tag.trim().toLowerCase());
-                    }
-                });
-            }
-        });
-        document.getElementById('existing-tags-count').textContent = allTags.size;
+    function moveNoteToNewPosition(movingNoteId, targetNoteId) {
+        const activeFolder = state.folders.find(f => f.id === state.settings.activeFolderId);
+        if (!activeFolder) {
+            console.error("Error: No hay carpeta activa seleccionada");
+            exitReorderMode();
+            return;
+        }
+        
+        if (!activeFolder.noteOrder) {
+            activeFolder.noteOrder = [];
+        }
+        
+        if (!activeFolder.noteOrder.includes(movingNoteId) || !activeFolder.noteOrder.includes(targetNoteId)) {
+            console.error("Error: Una de las notas no está en esta carpeta");
+            exitReorderMode();
+            return;
+        }
+        
+        const newOrder = [...activeFolder.noteOrder];
+        const movingIndex = newOrder.indexOf(movingNoteId);
+        newOrder.splice(movingIndex, 1);
+        const targetIndex = newOrder.indexOf(targetNoteId);
+        newOrder.splice(targetIndex, 0, movingNoteId);
+        
+        activeFolder.noteOrder = newOrder;
+        saveLocal();
+        
+        exitReorderMode();
+        render();
     }
 
+    // ========== RENDERIZADO PRINCIPAL ==========
     window.render = function() {
         const catContainer = document.getElementById('category-container');
-        const mainContent = document.getElementById('main-content');
+        const vignetteContainer = document.getElementById('vignette-container');
         const bgOverlay = document.getElementById('bg-overlay');
 
-        // Renderizar categorías
-        catContainer.innerHTML = '';
-        state.categories.forEach(cat => {
-            const btn = document.createElement('button');
-            btn.className = `category-btn ${state.activeCat === cat.name ? 'active' : ''}`;
-            btn.innerText = cat.name;
-            btn.onclick = () => { state.activeCat = cat.name; render(); };
-            btn.oncontextmenu = (e) => { 
-                e.preventDefault(); 
-                selectedCatContext = cat.name; 
-                showContextMenu(e.pageX, e.pageY); 
-            };
-            catContainer.appendChild(btn);
-        });
+        if (!catContainer || !vignetteContainer || !bgOverlay) return;
 
-        // Establecer fondo de categoría
-        const currentCat = state.categories.find(c => c.name === state.activeCat);
-        if(currentCat && currentCat.bg) {
-            bgOverlay.style.backgroundImage = `url('${currentCat.bg}')`;
+        catContainer.innerHTML = '';
+        vignetteContainer.innerHTML = '';
+
+        if (Array.isArray(state.folders)) {
+            state.folders.forEach(folder => {
+                if (!folder || !folder.id) return;
+                
+                const btn = document.createElement('button');
+                btn.className = `category-btn ${state.settings.activeFolderId === folder.id ? 'active' : ''}`;
+                btn.innerText = folder.name || 'Sin nombre';
+                btn.onclick = () => { 
+                    state.settings.activeFolderId = folder.id; 
+                    render(); 
+                    clearBoard();
+                    exitReorderMode();
+                };
+                btn.oncontextmenu = (e) => { 
+                    e.preventDefault(); 
+                    selectedCatContext = folder.id; 
+                    showContextMenu(e.pageX, e.pageY); 
+                };
+                catContainer.appendChild(btn);
+            });
+        }
+
+        if (!state.folders || state.folders.length === 0) {
+            catContainer.innerHTML = '<span style="color: rgba(255,255,255,0.5); font-style: italic;">No hay carpetas</span>';
+        }
+
+        if (!state.settings.activeFolderId && state.folders && state.folders.length > 0) {
+            state.settings.activeFolderId = state.folders[0].id;
+        }
+
+        const activeFolder = state.folders ? state.folders.find(f => f && f.id === state.settings.activeFolderId) : null;
+        if (activeFolder && activeFolder.bg) {
+            bgOverlay.style.backgroundImage = `url('${activeFolder.bg}')`;
         } else {
             bgOverlay.style.backgroundImage = 'none';
         }
 
-        // Renderizar viñetas
-        mainContent.innerHTML = '';
-        const filtered = state.snippets.filter(s => 
-            s.cat === state.activeCat && 
-            (s.title.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
-             (s.tags && s.tags.some(tag => tag.toLowerCase().includes(state.searchTerm.toLowerCase()))) ||
-             s.code.toLowerCase().includes(state.searchTerm.toLowerCase()))
-        );
-
-        filtered.forEach((snippet, index) => {
-            const vignette = document.createElement('div');
-            vignette.className = 'vignette';
-            vignette.dataset.id = index;
+        if (activeFolder) {
+            let noteIds = Array.isArray(activeFolder.noteOrder) ? activeFolder.noteOrder : [];
+            let notesToDisplay = noteIds
+                .map(id => state.notes && state.notes[id])
+                .filter(note => note && typeof note === 'object');
             
-            // Imagen
-            const imageDiv = document.createElement('div');
-            imageDiv.className = snippet.image ? 'vignette-image' : 'vignette-image default';
-            if (snippet.image) {
-                const img = document.createElement('img');
-                img.src = snippet.image;
-                img.alt = snippet.title;
-                img.onerror = function() {
-                    this.parentElement.className = 'vignette-image default';
-                    this.remove();
-                };
-                imageDiv.appendChild(img);
+            if (state.settings.searchTerm) {
+                const searchTerm = state.settings.searchTerm.toLowerCase();
+                notesToDisplay = notesToDisplay.filter(note => 
+                    (note.title && note.title.toLowerCase().includes(searchTerm)) ||
+                    (note.description && note.description.toLowerCase().includes(searchTerm)) ||
+                    (note.tags && Array.isArray(note.tags) && note.tags.some(tag => 
+                        tag && typeof tag === 'string' && tag.toLowerCase().includes(searchTerm)
+                    )) ||
+                    (note.code && note.code.toLowerCase().includes(searchTerm))
+                );
             }
             
-            // Título
-            const titleDiv = document.createElement('div');
-            titleDiv.className = 'vignette-title';
-            titleDiv.textContent = snippet.title;
+            notesToDisplay.forEach((note, index) => {
+                if (!note || !note.id) return;
+                
+                const vignette = document.createElement('div');
+                vignette.className = 'vignette';
+                vignette.dataset.id = note.id;
+                
+                if (isReorderMode && note.id === reorderSelectedId) {
+                    vignette.classList.add('reorder-selected');
+                    const indicator = document.createElement('div');
+                    indicator.className = 'reorder-indicator';
+                    indicator.textContent = '1️⃣';
+                    vignette.appendChild(indicator);
+                }
+                
+                if (isReorderMode && note.id === reorderTargetId) {
+                    vignette.classList.add('reorder-target');
+                    
+                    // Agregar flecha ⬅️ para indicar posición
+                    const arrow = document.createElement('div');
+                    arrow.className = 'reorder-arrow';
+                    arrow.textContent = '⬅️';
+                    vignette.appendChild(arrow);
+                }
+                
+                const orderDiv = document.createElement('div');
+                orderDiv.className = 'vignette-order';
+                orderDiv.textContent = index + 1;
+                vignette.appendChild(orderDiv);
+                
+                const idDiv = document.createElement('div');
+                idDiv.className = 'vignette-id';
+                idDiv.textContent = note.id || '?????';
+                vignette.appendChild(idDiv);
+                
+                const imageDiv = document.createElement('div');
+                imageDiv.className = note.image ? 'vignette-image' : 'vignette-image default';
+                if (note.image) {
+                    const img = document.createElement('img');
+                    img.src = note.image;
+                    img.alt = note.title || 'Nota';
+                    img.onerror = function() {
+                        this.parentElement.className = 'vignette-image default';
+                        this.remove();
+                    };
+                    imageDiv.appendChild(img);
+                }
+                
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'vignette-title';
+                titleDiv.textContent = note.title || 'Sin título';
+                
+                // AGREGAR DESCRIPCIÓN A LA VIÑETA
+                const descriptionDiv = document.createElement('div');
+                descriptionDiv.className = 'vignette-description';
+                descriptionDiv.textContent = note.description || '';
+                if (!note.description) {
+                    descriptionDiv.style.display = 'none';
+                }
+                
+                const tagsDiv = document.createElement('div');
+                tagsDiv.className = 'vignette-tags';
+                if (note.tags && Array.isArray(note.tags)) {
+                    note.tags.slice(0, 3).forEach(tag => {
+                        if (!tag || typeof tag !== 'string') return;
+                        const tagSpan = document.createElement('span');
+                        tagSpan.className = 'tag';
+                        tagSpan.textContent = tag;
+                        tagsDiv.appendChild(tagSpan);
+                    });
+                    if (note.tags.length > 3) {
+                        const moreTag = document.createElement('span');
+                        moreTag.className = 'tag';
+                        moreTag.textContent = `+${note.tags.length - 3}`;
+                        tagsDiv.appendChild(moreTag);
+                    }
+                }
+                
+                vignette.appendChild(imageDiv);
+                vignette.appendChild(titleDiv);
+                vignette.appendChild(descriptionDiv);
+                vignette.appendChild(tagsDiv);
+                
+                if (isReorderMode) {
+                    vignette.onclick = (e) => {
+                        e.stopPropagation();
+                        handleReorderClick(note.id);
+                    };
+                    
+                    vignette.onmouseenter = () => {
+                        if (reorderSelectedId !== null && note.id !== reorderSelectedId) {
+                            reorderTargetId = note.id;
+                            updateVignetteClasses();
+                        }
+                    };
+                    
+                    vignette.onmouseleave = () => {
+                        if (reorderTargetId === note.id) {
+                            reorderTargetId = null;
+                            updateVignetteClasses();
+                        }
+                    };
+                } else {
+                    vignette.onclick = () => {
+                        loadSnippetToBoard(note.id);
+                    };
+                    
+                    vignette.oncontextmenu = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        selectedVignetteId = note.id;
+                        showVignetteContextMenu(e.pageX, e.pageY);
+                    };
+                }
+                
+                vignetteContainer.appendChild(vignette);
+            });
             
-            // Tags
-            const tagsDiv = document.createElement('div');
-            tagsDiv.className = 'vignette-tags';
-            if (snippet.tags && snippet.tags.length > 0) {
-                snippet.tags.slice(0, 3).forEach(tag => {
-                    const tagSpan = document.createElement('span');
-                    tagSpan.className = 'tag';
-                    tagSpan.textContent = tag;
-                    tagsDiv.appendChild(tagSpan);
-                });
-                if (snippet.tags.length > 3) {
-                    const moreTag = document.createElement('span');
-                    moreTag.className = 'tag';
-                    moreTag.textContent = `+${snippet.tags.length - 3}`;
-                    tagsDiv.appendChild(moreTag);
+            if (notesToDisplay.length === 0) {
+                vignetteContainer.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">
+                        <div style="font-size: 3rem; margin-bottom: 20px;">📄</div>
+                        <p>${state.settings.searchTerm ? 'No se encontraron notas' : 'No hay notas en esta carpeta'}</p>
+                        ${!state.settings.searchTerm ? '<p style="font-size: 0.9rem;">Haz clic en ★ para crear una nueva nota</p>' : ''}
+                    </div>
+                `;
+            }
+        } else {
+            vignetteContainer.innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">
+                    <div style="font-size: 3rem; margin-bottom: 20px;">📁</div>
+                    <p>No hay carpeta seleccionada</p>
+                    <p style="font-size: 0.9rem;">Haz clic en + Carpeta para crear una nueva</p>
+                </div>
+            `;
+        }
+        
+        updateReorderInstructions();
+        updateAllTags();
+    };
+
+    // Función para actualizar solo las clases de las viñetas
+    function updateVignetteClasses() {
+        document.querySelectorAll('.vignette').forEach(vignette => {
+            const noteId = vignette.dataset.id;
+            vignette.classList.remove('reorder-selected', 'reorder-target');
+            
+            // Remover flechas existentes
+            const existingArrow = vignette.querySelector('.reorder-arrow');
+            if (existingArrow) {
+                existingArrow.remove();
+            }
+            
+            if (noteId === reorderSelectedId) {
+                vignette.classList.add('reorder-selected');
+                
+                // Remover y agregar indicador
+                const existingIndicator = vignette.querySelector('.reorder-indicator');
+                if (!existingIndicator) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'reorder-indicator';
+                    indicator.textContent = '1️⃣';
+                    vignette.appendChild(indicator);
                 }
             }
             
-            // Tooltip con código
-            const tooltip = document.createElement('div');
-            tooltip.className = 'code-tooltip';
-            const code = document.createElement('code');
-            code.textContent = snippet.code;
-            tooltip.appendChild(code);
-            
-            vignette.appendChild(imageDiv);
-            vignette.appendChild(titleDiv);
-            vignette.appendChild(tagsDiv);
-            vignette.appendChild(tooltip);
-            
-            // Eventos
-            vignette.onclick = () => {
-                navigator.clipboard.writeText(snippet.code);
-                vignette.style.background = 'rgba(52, 152, 219, 0.3)';
-                setTimeout(() => vignette.style.background = '', 500);
-            };
-            
-            vignette.oncontextmenu = (e) => {
-                e.preventDefault();
-                selectedVignetteId = index;
-                showVignetteContextMenu(e.pageX, e.pageY);
-            };
-            
-            mainContent.appendChild(vignette);
+            if (noteId === reorderTargetId) {
+                vignette.classList.add('reorder-target');
+                
+                // Agregar flecha ⬅️
+                const arrow = document.createElement('div');
+                arrow.className = 'reorder-arrow';
+                arrow.textContent = '⬅️';
+                vignette.appendChild(arrow);
+            }
         });
+    }
+
+    function updateReorderInstructions() {
+        const instructions = document.getElementById('reorder-instructions');
+        if (!instructions) return;
+        
+        if (isReorderMode) {
+            instructions.classList.add('active');
+            if (reorderSelectedId === null) {
+                instructions.innerHTML = `
+                    <h3>📋 Modo Reordenamiento Activo</h3>
+                    <p>1. <strong>Haz clic</strong> en una nota para seleccionarla (se pondrá verde)</p>
+                    <p>2. <strong>Mueve el mouse</strong> sobre otra nota para definir la posición</p>
+                    <p>3. <strong>Haz clic</strong> en la segunda nota para posicionar la seleccionada</p>
+                    <div class="steps">
+                        <span class="step">Primer clic: Seleccionar</span>
+                        <span class="step">Mouseover: Previsualizar</span>
+                        <span class="step">Segundo clic: Posicionar</span>
+                    </div>
+                `;
+            } else {
+                const selectedNote = state.notes[reorderSelectedId];
+                instructions.innerHTML = `
+                    <h3>✅ Nota Seleccionada</h3>
+                    <p><strong>Seleccionada:</strong> "${selectedNote?.title || 'Sin título'}"</p>
+                    <p><strong>Instrucción:</strong> Haz clic en otra nota para moverla allí (se mostrará una flecha ⬅️)</p>
+                `;
+            }
+        } else {
+            instructions.classList.remove('active');
+        }
+    }
+
+    // ========== FUNCIONES DE LA PIZARRA ==========
+    function loadSnippetToBoard(noteId) {
+        const note = state.notes[noteId];
+        if (!note) return;
+        
+        if (currentBoardSnippet === noteId) {
+            document.getElementById('board-code').value = originalBoardCode;
+            return;
+        }
+        
+        currentBoardSnippet = noteId;
+        originalBoardCode = note.code;
+        
+        document.getElementById('board-empty').style.display = 'none';
+        document.getElementById('board-content').style.display = 'flex';
+        document.getElementById('board-title').textContent = note.title || 'Sin título';
+        
+        // Mostrar descripción en la pizarra (color naranja)
+        const descriptionEl = document.getElementById('board-description');
+        if (descriptionEl) {
+            descriptionEl.textContent = note.description || '';
+            if (!note.description) {
+                descriptionEl.style.display = 'none';
+            } else {
+                descriptionEl.style.display = 'block';
+            }
+        }
+        
+        const tagsContainer = document.getElementById('board-tags');
+        if (tagsContainer) {
+            tagsContainer.innerHTML = '';
+            if (note.tags && Array.isArray(note.tags) && note.tags.length > 0) {
+                note.tags.forEach(tag => {
+                    if (!tag || typeof tag !== 'string') return;
+                    const tagElement = document.createElement('span');
+                    tagElement.className = 'board-tag';
+                    tagElement.textContent = tag;
+                    tagsContainer.appendChild(tagElement);
+                });
+            }
+        }
+        
+        const boardCode = document.getElementById('board-code');
+        if (boardCode) {
+            boardCode.value = note.code || '';
+        }
+    }
+
+    window.copyBoardCode = function() {
+        const boardCode = document.getElementById('board-code');
+        if (boardCode && boardCode.value) {
+            navigator.clipboard.writeText(boardCode.value);
+            const copyBtn = document.querySelector('.board-btn');
+            if (copyBtn) {
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✓ Copiado!';
+                copyBtn.style.background = '#2ecc71';
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.style.background = '';
+                }, 1500);
+            }
+        }
     };
 
-    // MODAL FUNCTIONS
-    window.openModal = function(snippetId = null) {
-        editingSnippetId = snippetId;
+    window.clearBoard = function() {
+        currentBoardSnippet = null;
+        originalBoardCode = "";
+        const boardEmpty = document.getElementById('board-empty');
+        const boardContent = document.getElementById('board-content');
+        if (boardEmpty) boardEmpty.style.display = 'flex';
+        if (boardContent) boardContent.style.display = 'none';
+        
+        const boardTitle = document.getElementById('board-title');
+        if (boardTitle) boardTitle.textContent = 'Pizarra de Código';
+        
+        const boardDescription = document.getElementById('board-description');
+        if (boardDescription) boardDescription.textContent = '';
+        
+        const boardTags = document.getElementById('board-tags');
+        if (boardTags) boardTags.innerHTML = '';
+    };
+
+    // ========== MODAL FUNCTIONS ==========
+    window.openModal = function(noteId = null) {
+        editingSnippetId = noteId;
         const modal = document.getElementById('modal-overlay');
         const titleInput = document.getElementById('modal-title');
         
-        if (snippetId !== null) {
-            titleInput.textContent = 'Editar Viñeta';
-            const snippet = state.snippets[snippetId];
-            document.getElementById('snippet-title').value = snippet.title;
-            document.getElementById('snippet-image').value = snippet.image || '';
-            document.getElementById('snippet-code').value = snippet.code;
-            
-            currentTags = snippet.tags ? [...snippet.tags] : [];
-            renderTags();
+        if (!modal || !titleInput) return;
+        
+        if (noteId !== null) {
+            titleInput.textContent = 'Editar Nota';
+            const note = state.notes[noteId];
+            if (note) {
+                document.getElementById('snippet-title').value = note.title || '';
+                document.getElementById('snippet-description').value = note.description || '';
+                document.getElementById('snippet-image').value = note.image || '';
+                document.getElementById('snippet-code').value = note.code || '';
+                currentTags = note.tags && Array.isArray(note.tags) ? [...note.tags] : [];
+            }
         } else {
-            titleInput.textContent = 'Nueva Viñeta';
+            titleInput.textContent = 'Nueva Nota';
             document.getElementById('snippet-title').value = '';
+            document.getElementById('snippet-description').value = '';
             document.getElementById('snippet-image').value = '';
             document.getElementById('snippet-code').value = '';
             currentTags = [];
-            renderTags();
         }
         
+        renderTags();
         modal.classList.add('active');
         document.getElementById('snippet-title').focus();
     };
 
     window.closeModal = function() {
-        document.getElementById('modal-overlay').classList.remove('active');
+        const modal = document.getElementById('modal-overlay');
+        if (modal) modal.classList.remove('active');
         editingSnippetId = null;
+        currentTags = [];
     };
 
     function renderTags() {
         const tagDisplay = document.getElementById('tag-display');
-        tagDisplay.innerHTML = '';
+        if (!tagDisplay) return;
         
+        tagDisplay.innerHTML = '';
         currentTags.forEach((tag, index) => {
+            if (!tag || typeof tag !== 'string') return;
             const tagElement = document.createElement('span');
             tagElement.className = 'input-tag';
             tagElement.innerHTML = `
@@ -785,19 +1650,18 @@
     window.updateTagSuggestions = function() {
         const input = document.getElementById('tag-input');
         const suggestionsBox = document.getElementById('tag-suggestions');
-        const searchTerm = input.value.trim().toLowerCase();
+        if (!input || !suggestionsBox) return;
         
+        const searchTerm = input.value.trim().toLowerCase();
         if (!searchTerm) {
             suggestionsBox.classList.remove('active');
             return;
         }
         
-        // Filtrar tags existentes
         const filteredTags = Array.from(allTags).filter(tag => 
-            tag.includes(searchTerm) && !currentTags.includes(tag)
+            tag && typeof tag === 'string' && tag.includes(searchTerm) && !currentTags.includes(tag)
         );
         
-        // Mostrar sugerencias
         suggestionsBox.innerHTML = '';
         if (filteredTags.length > 0) {
             filteredTags.forEach(tag => {
@@ -821,63 +1685,74 @@
     };
 
     window.removeTag = function(index) {
-        currentTags.splice(index, 1);
-        renderTags();
+        if (index >= 0 && index < currentTags.length) {
+            currentTags.splice(index, 1);
+            renderTags();
+        }
     };
 
-    // Manejar entrada de tags
-    document.getElementById('tag-input').addEventListener('keydown', function(e) {
-        if (e.key === ',' || e.key === 'Enter') {
-            e.preventDefault();
-            const tag = this.value.trim();
-            if (tag && !currentTags.includes(tag)) {
-                currentTags.push(tag);
-                renderTags();
-                this.value = '';
-            }
-        }
-    });
-
-    document.getElementById('tag-input').addEventListener('blur', function() {
-        const tag = this.value.trim();
-        if (tag && !currentTags.includes(tag)) {
-            currentTags.push(tag);
-            renderTags();
-            this.value = '';
-        }
-    });
-
     window.saveSnippet = function() {
-        const title = document.getElementById('snippet-title').value.trim();
-        const image = document.getElementById('snippet-image').value.trim();
-        const code = document.getElementById('snippet-code').value.trim();
+        const titleInput = document.getElementById('snippet-title');
+        const descriptionInput = document.getElementById('snippet-description');
+        const imageInput = document.getElementById('snippet-image');
+        const codeInput = document.getElementById('snippet-code');
+        
+        if (!titleInput || !codeInput) return;
+        
+        const title = titleInput.value.trim();
+        const description = descriptionInput ? descriptionInput.value.trim() : '';
+        const image = imageInput ? imageInput.value.trim() : '';
+        const code = codeInput.value.trim();
         
         if (!title || !code) {
             alert('Título y código son obligatorios');
             return;
         }
         
-        const snippet = {
-            cat: state.activeCat,
+        if (!state.settings.activeFolderId) {
+            alert('Primero selecciona o crea una carpeta');
+            return;
+        }
+        
+        const noteData = {
+            id: editingSnippetId || generate5DigitId(),
             title: title,
-            image: image || null,
+            description: description,
+            image: image || '',
             code: code,
-            tags: currentTags.filter(tag => tag.trim())
+            tags: currentTags.filter(tag => tag && typeof tag === 'string' && tag.trim()),
+            date: Date.now()
         };
         
         if (editingSnippetId !== null) {
-            state.snippets[editingSnippetId] = snippet;
+            state.notes[editingSnippetId] = noteData;
         } else {
-            state.snippets.push(snippet);
+            state.notes[noteData.id] = noteData;
+            
+            const activeFolder = state.folders.find(f => f && f.id === state.settings.activeFolderId);
+            if (activeFolder) {
+                if (!activeFolder.noteOrder) {
+                    activeFolder.noteOrder = [];
+                }
+                activeFolder.noteOrder.push(noteData.id);
+            }
         }
         
-        saveAll();
+        saveLocal();
         closeModal();
+        render();
+        
+        // Si esta nota está actualmente en la pizarra, actualizarla
+        if (currentBoardSnippet === noteData.id) {
+            loadSnippetToBoard(noteData.id);
+        }
     };
 
-    // CONTEXT MENU FUNCTIONS
+    // ========== CONTEXT MENU FUNCTIONS ==========
     function showContextMenu(x, y) {
         const menu = document.getElementById('context-menu');
+        if (!menu) return;
+        
         menu.style.display = 'block';
         menu.style.left = Math.min(x, window.innerWidth - 200) + 'px';
         menu.style.top = Math.min(y, window.innerHeight - 150) + 'px';
@@ -885,84 +1760,292 @@
 
     function showVignetteContextMenu(x, y) {
         const menu = document.getElementById('vignette-context-menu');
+        if (!menu) return;
+        
         menu.style.display = 'block';
         menu.style.left = Math.min(x, window.innerWidth - 200) + 'px';
         menu.style.top = Math.min(y, window.innerHeight - 150) + 'px';
     }
 
-    window.onclick = () => { 
-        document.getElementById('context-menu').style.display = 'none';
-        document.getElementById('vignette-context-menu').style.display = 'none';
+    window.onclick = function(e) {
+        const contextMenu = document.getElementById('context-menu');
+        const vignetteMenu = document.getElementById('vignette-context-menu');
+        
+        if (contextMenu && contextMenu.style.display === 'block' && 
+            !contextMenu.contains(e.target)) {
+            contextMenu.style.display = 'none';
+        }
+        
+        if (vignetteMenu && vignetteMenu.style.display === 'block' && 
+            !vignetteMenu.contains(e.target)) {
+            vignetteMenu.style.display = 'none';
+        }
     };
 
     window.editVignette = function() {
         if (selectedVignetteId !== null) {
             openModal(selectedVignetteId);
-            document.getElementById('vignette-context-menu').style.display = 'none';
+            const menu = document.getElementById('vignette-context-menu');
+            if (menu) menu.style.display = 'none';
         }
     };
 
     window.copyVignetteCode = function() {
         if (selectedVignetteId !== null) {
-            const snippet = state.snippets[selectedVignetteId];
-            navigator.clipboard.writeText(snippet.code);
-            document.getElementById('vignette-context-menu').style.display = 'none';
+            const note = state.notes[selectedVignetteId];
+            if (note && note.code) {
+                navigator.clipboard.writeText(note.code);
+                const menu = document.getElementById('vignette-context-menu');
+                if (menu) {
+                    const menuBtn = menu.querySelector('button:nth-child(2)');
+                    if (menuBtn) {
+                        const originalText = menuBtn.textContent;
+                        menuBtn.textContent = '✓ Copiado!';
+                        setTimeout(() => {
+                            menuBtn.textContent = originalText;
+                        }, 1000);
+                    }
+                }
+            }
         }
     };
 
     window.deleteVignette = function() {
-        if (selectedVignetteId !== null && confirm('¿Eliminar esta viñeta?')) {
-            state.snippets.splice(selectedVignetteId, 1);
-            saveAll();
-            document.getElementById('vignette-context-menu').style.display = 'none';
+        if (selectedVignetteId !== null && confirm('¿Eliminar esta nota?')) {
+            delete state.notes[selectedVignetteId];
+            
+            if (state.folders && Array.isArray(state.folders)) {
+                state.folders.forEach(folder => {
+                    if (folder && folder.noteOrder && Array.isArray(folder.noteOrder)) {
+                        const index = folder.noteOrder.indexOf(selectedVignetteId);
+                        if (index !== -1) {
+                            folder.noteOrder.splice(index, 1);
+                        }
+                    }
+                });
+            }
+            
+            saveLocal();
+            const menu = document.getElementById('vignette-context-menu');
+            if (menu) menu.style.display = 'none';
+            
+            if (currentBoardSnippet === selectedVignetteId) {
+                clearBoard();
+            }
+            
+            render();
         }
     };
 
-    // CATEGORY FUNCTIONS
+    // ========== CATEGORY FUNCTIONS ==========
     window.handleSearch = () => { 
-        state.searchTerm = document.getElementById('main-search').value; 
-        render(); 
+        const searchInput = document.getElementById('main-search');
+        if (searchInput) {
+            state.settings.searchTerm = searchInput.value; 
+            render(); 
+        }
     };
     
     window.renameCategory = () => {
-        const n = prompt("Nuevo nombre:");
-        if(n) {
-            state.snippets.forEach(s => { if(s.cat === selectedCatContext) s.cat = n; });
-            state.categories.find(c => c.name === selectedCatContext).name = n;
-            state.activeCat = n;
-            saveAll();
+        if (!selectedCatContext) return;
+        const folder = state.folders.find(f => f && f.id === selectedCatContext);
+        if (!folder) return;
+        
+        const n = prompt("Nuevo nombre:", folder.name || '');
+        if(n && n.trim()) {
+            folder.name = n.trim();
+            saveLocal();
+            render();
         }
     };
 
     window.setBackground = () => {
-        const url = prompt("URL de la imagen:");
+        if (!selectedCatContext) return;
+        const folder = state.folders.find(f => f && f.id === selectedCatContext);
+        if (!folder) return;
+        
+        const url = prompt("URL de la imagen (deja vacío para eliminar):", folder.bg || "");
         if(url !== null) { 
-            state.categories.find(c => c.name === selectedCatContext).bg = url; 
-            saveAll(); 
+            folder.bg = url.trim();
+            saveLocal();
+            render();
         }
     };
 
     window.deleteCategory = () => {
-        if(confirm("¿Eliminar juego y todas sus viñetas?")) {
-            state.categories = state.categories.filter(c => c.name !== selectedCatContext);
-            state.snippets = state.snippets.filter(s => s.cat !== selectedCatContext);
-            state.activeCat = state.categories[0]?.name || "";
-            saveAll();
+        if (!selectedCatContext) return;
+        const folder = state.folders.find(f => f && f.id === selectedCatContext);
+        if (!folder) return;
+        
+        if(confirm(`¿Eliminar la carpeta "${folder.name || 'Sin nombre'}" y todas sus notas?`)) {
+            state.folders = state.folders.filter(f => f && f.id !== selectedCatContext);
+            
+            if (state.settings.activeFolderId === selectedCatContext) {
+                state.settings.activeFolderId = state.folders.length > 0 ? state.folders[0].id : null;
+            }
+            
+            saveLocal();
+            clearBoard();
+            render();
         }
     };
 
-    window.addCategory = () => {
-        const n = prompt("Nombre del juego:");
-        if(n) { 
-            state.categories.push({name: n, bg: ""}); 
-            state.activeCat = n; 
-            saveAll(); 
+    window.addCategory = function() {
+        const n = prompt("Nombre de la carpeta:");
+        if(n && n.trim()) {
+            if (!state.folders) {
+                state.folders = [];
+            }
+            
+            const newFolder = {
+                id: 'folder_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                name: n.trim(),
+                bg: "",
+                noteOrder: []
+            };
+            
+            state.folders.push(newFolder);
+            state.settings.activeFolderId = newFolder.id;
+            saveLocal();
+            render();
         }
     };
 
-    // Inicializar
-    updateAllTags();
-    render();
+    // ========== FIREBASE FUNCTIONS ==========
+    window.saveToFirebase = async function() {
+        try {
+            const dbRef = ref(db, 'vaultData');
+            state.settings.lastUpdated = Date.now();
+            await set(dbRef, state);
+            alert('✅ Datos guardados en Firebase correctamente');
+        } catch (error) {
+            console.error("Error al guardar en Firebase:", error);
+            alert('❌ Error al guardar en Firebase: ' + error.message);
+        }
+    };
+
+    window.loadFromFirebase = async function() {
+        if (!confirm('¿Cargar datos desde Firebase? Se perderán los datos locales no guardados.')) {
+            return;
+        }
+        
+        try {
+            const dbRef = ref(db, 'vaultData');
+            const snapshot = await get(dbRef);
+            
+            if (snapshot.exists()) {
+                const cloudData = snapshot.val();
+                if (cloudData) {
+                    state = {
+                        folders: Array.isArray(cloudData.folders) ? cloudData.folders : [],
+                        notes: cloudData.notes && typeof cloudData.notes === 'object' ? cloudData.notes : {},
+                        settings: {
+                            activeFolderId: cloudData.settings?.activeFolderId || null,
+                            searchTerm: cloudData.settings?.searchTerm || "",
+                            lastUpdated: cloudData.settings?.lastUpdated || null,
+                            vignetteSize: cloudData.settings?.vignetteSize || "medium"
+                        }
+                    };
+                }
+                saveLocal();
+                render();
+                alert('✅ Datos cargados desde Firebase correctamente');
+            } else {
+                alert('⚠️ No hay datos guardados en Firebase');
+            }
+        } catch (error) {
+            console.error("Error al cargar desde Firebase:", error);
+            alert('❌ Error al cargar desde Firebase: ' + error.message);
+        }
+    };
+
+    // ========== AUXILIARY FUNCTIONS ==========
+    function updateAllTags() {
+        allTags.clear();
+        if (state.notes && typeof state.notes === 'object') {
+            Object.values(state.notes).forEach(note => {
+                if (note && note.tags && Array.isArray(note.tags)) {
+                    note.tags.forEach(tag => {
+                        if (tag && typeof tag === 'string' && tag.trim()) {
+                            allTags.add(tag.trim().toLowerCase());
+                        }
+                    });
+                }
+            });
+        }
+        const countEl = document.getElementById('existing-tags-count');
+        if (countEl) countEl.textContent = allTags.size;
+    }
+
+    function saveLocal() { 
+        try {
+            localStorage.setItem('vaultCache', JSON.stringify(state));
+        } catch (e) {
+            console.error("Error al guardar localmente:", e);
+        }
+    }
+
+    // ========== INITIALIZATION ==========
+    function initApp() {
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && isReorderMode) {
+                exitReorderMode();
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (isReorderMode && !e.target.closest('.vignette') && !e.target.closest('.ui-btn[title*="Cancelar"]')) {
+                if (reorderSelectedId !== null) {
+                    exitReorderMode();
+                }
+            }
+        });
+
+        const tagInput = document.getElementById('tag-input');
+        if (tagInput) {
+            tagInput.addEventListener('keydown', function(e) {
+                if (e.key === ',' || e.key === 'Enter') {
+                    e.preventDefault();
+                    const tag = this.value.trim();
+                    if (tag && !currentTags.includes(tag)) {
+                        currentTags.push(tag);
+                        renderTags();
+                        this.value = '';
+                    }
+                }
+            });
+            
+            tagInput.addEventListener('blur', function() {
+                const tag = this.value.trim();
+                if (tag && !currentTags.includes(tag)) {
+                    currentTags.push(tag);
+                    renderTags();
+                    this.value = '';
+                }
+            });
+        }
+        
+        const boardCode = document.getElementById('board-code');
+        if (boardCode) {
+            boardCode.addEventListener('input', function() {});
+        }
+        
+        // Aplicar tamaño inicial de viñetas
+        applyVignetteSize();
+        updateAllTags();
+        render();
+        
+        // Configurar botones de tamaño según configuración guardada
+        setTimeout(() => {
+            changeVignetteSize(state.settings.vignetteSize);
+        }, 100);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+        initApp();
+    }
 </script>
 </body>
 </html>
